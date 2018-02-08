@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Mis rutas</title>
+<link rel="stylesheet" type="text/css" href="geo.css" />
+
+  <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=true"></script>
+  <script type="text/javascript" src="gmaps.js"></script>
+
+  <script type="text/javascript" src="zepto.min.js"></script>
+  <script type="text/javascript">
+    var map, latitud, longitud;
+	var posicion_ruta=0;
+	var ruta_actual=[];
+	
+	localStorage.ruta = (localStorage.ruta || []);
+	
+	
+	$(function(){
+		
+	
+	function inicializar() {			//Función para limpiar el mapa
+		if (confirm("Limpiar mapa")===true) {
+			map.cleanRoute();	//Limpiamos las rutas
+			map.removeMarkers();	//quitamos los marcadores
+			localStorage.ruta="";	//Vaciamos la memoria de rutas
+			ruta_actual=[];
+			geolocalizar();		//Nos posicionamos nuevamente en el mapa
+		};
+	};
+	
+	function compactar() {
+		var inicio_lat = ruta_actual[0][0];
+		var inicio_lng = ruta_actual[0][1];
+		var ultimo = ruta_actual.length-1;
+		var fin_lat = ruta_actual[ultimo][0];
+		var fin_lng = ruta_actual[ultimo][1];
+		map.cleanRoute();
+		map.removeMarkers();
+		map.addMarker({lat:inicio_lat, lng:inicio_lng});
+		
+		map.addMarker({lat:fin_lat, lng:fin_lng});
+		map.drawRoute({
+			origin: [inicio_lat, inicio_lng],	//Punto origen de la ruta
+			destination: [fin_lat, fin_lng],  //Punto destino de la ruta
+			travelMode: "driving",
+			strokeColor: '#1B74FD',
+			strokeOpacity: 0.6,
+			strokeWeight: 4	
+		});
+	};
+	
+	
+	 function enlazarMarcador(e){	//Mostrar ruta entre dos puntos
+	 
+			map.drawRoute({  //Dibujar la ruta
+		  		origin: [latitud, longitud],	//Punto origen de la ruta
+				destination: [e.latLng.lat(), e.latLng.lng()],  //Punto destino de la ruta
+				travelMode: "driving",
+				strokeColor: '#1B74FD',
+				strokeOpacity: 0.6,
+				strokeWeight: 4		  
+			}); 
+			latitud = e.latLng.lat();	//Guardamos el destino de la ruta como nuevo origen
+			longitud = e.latLng.lng();
+			map.addMarker({lat:latitud, lng:longitud});  //Añadimos un marcador en el nuevo origen
+			guardar_ruta(latitud,longitud);	//Guardamos la posición en la memoria de rutas
+			
+			
+	  }; 
+	  
+	  
+	  function guardar_ruta(x,y) {	//Función para guardar las posiciones de la ruta
+		    ruta_actual.push([x,y]);  //Añadimos la posición actual al final de la lista			
+			ruta_guardada = JSON.stringify(ruta_actual);
+			localStorage.ruta = ruta_guardada;	//Pasamos la lista de posiciones a la variable localStorage
+	  }; 
+	  
+	  
+	  
+	  function mostrar_ruta() {	//Función para mostrar las rutas guardadas en memoria
+		  var lat_ini, lng_ini, lat_fin, lng_fin;			
+			ruta_actual = JSON.parse(localStorage.ruta);  //Sacamos la lista de posiciones de la variable localStorage
+			lat_ini = ruta_actual[0][0];	//Esta es la posición inicial
+			lng_ini = ruta_actual[0][1];
+			 map = new GMaps({  //Creamos el mapa
+              el: '#map',
+              lat: lat_ini,
+              lng: lng_ini,
+			  click: enlazarMarcador,
+			  tap: enlazarMarcador
+            }); 
+			
+			map.addMarker({lat:lat_ini, lng:lng_ini});	//Añadimos un marcador en la posición inicial
+			for (i=1; i<ruta_actual.length;i++){	//Se recorre la lista para dibujar todas las rutas guardadas
+				lat_fin=ruta_actual[i][0];		//Esta es la posición siguiente
+				lng_fin=ruta_actual[i][1];
+				map.addMarker({lat:lat_fin, lng:lng_fin});	 //Se añade el marcador al mapa
+				map.drawRoute({  		//Se dibuja la ruta entre los dos puntos
+		  		origin: [lat_ini, lng_ini],
+				destination: [lat_fin, lng_fin],
+				travelMode: "driving",
+				strokeColor: '#F4060A',
+				strokeOpacity: 0.6,
+				strokeWeight: 4		
+				});   //map.drawRoute
+				lat_ini = lat_fin;  //El punto final se convierte en el principio de la siguiente ruta
+				lng_ini = lng_fin; 
+			}     
+		};
+		
+		
+	  function geolocalizar(){		  
+
+        GMaps.geolocate({
+          success: function(position){		//Si la funcion geolocate funciona
+            latitud = position.coords.latitude;    //Posición actual
+            longitud = position.coords.longitude;
+          	map = new GMaps({   //Crear nuevo mapa
+              el: '#map',
+              lat: latitud,
+              lng: longitud,
+			  click: enlazarMarcador,
+			  tap: enlazarMarcador
+            }); 
+			
+            map.addMarker({ lat: latitud, lng: longitud});    //Añadir marcador posición actual
+			guardar_ruta(latitud,longitud);
+						
+          }, 
+          error: function(error) { alert('Error: '+error.message); },  //Mensaje de error si la funcion geolocate no funciona
+          not_supported: function(){ alert("No soporta geolocalización"); } //Mensaje de error si no está soportada la geolocalización
+        });  		 
+      }; 
+
+	  
+	  $("#inicializar").on("click", inicializar);
+	  $("#compactar").on("click", compactar);
+
+	  
+	  if (localStorage.ruta.length != 0) {
+		  mostrar_ruta();   //Mostrar las rutas guardadas si existen
+	  } else {
+		  geolocalizar();	//Mostrar la posición actual si no hay rutas guardadas
+	  };
+	});
+  
+  </script>
+</head>
+
+<body>
+<div id="cabecera">
+<h1>Geolocalización</h1>
+<button id="inicializar">Inicializar</button>
+<button id="compactar">Compactar</button>
+</div>
+  <div id="map"></div>
+</body>
+</html>

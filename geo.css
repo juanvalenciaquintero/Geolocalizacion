@@ -1,0 +1,49 @@
+
+*{
+    -webkit-touch-callout: none; /* anula el efecto visual del touch prolongado sobre el objeto */
+
+    user-select: none; /* user-select, hace el objeto no seleccionable */
+
+    -webkit-tap-highlight-color: rgba(0,0,0,0); /* anula el feedback de color al hacer tap en un link */
+    -webkit-tap-highlight-color: transparent; /* similar anterior en algunos android */
+  }
+
+body {
+	margin=0px;
+	padding:0px;
+}
+
+#cabecera {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  position: absolute; 
+  top: 0;             
+  left: 0;
+  right: 0;
+  height: 70px;
+  
+}
+
+h1 {
+	float:left;	
+	margin-left: 30px;
+	
+}
+
+#inicializar {
+	margin-top:30px;
+	margin-left:20px;	
+}
+
+#map {
+	display: block;
+  margin: 0;
+  padding: 0;
+  position: absolute; /* posición absoluta a navegador */
+  top: 70px;      /* 50px debajo de borde de navegador */
+  left: 0;        /* ajusta a borde de navegador */
+  right: 0;
+  bottom: 0;
+  background: rgba(0,255,0,0.5); /* verde si no hay mapa */
+}
